@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// LerArquivoCSV lê um arquivo CSV e retorna um slice de strings.
 func LerArquivoCSV(caminhoArquivo string) ([]string, error) {
 	arquivo, err := os.Open(caminhoArquivo)
 	if err != nil {
