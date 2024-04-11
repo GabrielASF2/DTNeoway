@@ -1,13 +1,16 @@
-FROM golang:1.18-alpine
+FROM golang:1.22-bookworm
 
 WORKDIR /app
 
 COPY go.mod go.sum ./
 
-RUN go mod download
-
 COPY . .
 
-RUN go build -o main
+RUN go mod download
 
-CMD ["./main"]
+# Install the postgres driver here
+RUN go install github.com/lib/pq
+
+RUN go build -o buyers ./
+
+CMD ["./buyers"]

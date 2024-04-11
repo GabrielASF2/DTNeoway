@@ -1,17 +1,18 @@
 package utils
 
 import (
+	"regexp"
+	"strconv"
 	"strings"
 )
 
-func RemoverAcentos(s string) string {
-	return strings.ReplaceAll(s, "áàãâäéèêëíìîïóòôõöúùûüç", "aaaaaeeeeiiiiooooouuuuc")
-}
-
-func ToLower(s string) string {
-	return strings.ToLower(s)
-}
-
 func RemoverCaracteresEspeciais(s string) string {
-	return strings.ReplaceAll(s, "[^a-zA-Z0-9 ]", "")
+	var re = regexp.MustCompile("[^a-zA-Z0-9 ]")
+	return re.ReplaceAllString(s, "")
+}
+
+func ConverterStringToFloat64(valor string) float64 {
+	valor = strings.ReplaceAll(valor, ",", ".")
+	valorConvertido, _ := strconv.ParseFloat(valor, 64)
+	return valorConvertido
 }

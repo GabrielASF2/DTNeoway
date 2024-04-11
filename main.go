@@ -2,19 +2,19 @@ package main
 
 import (
 	"buyers/domain/buyer"
-	"fmt"
-	"os"
-
 	"buyers/internal/database"
 	"buyers/internal/reader"
-	"buyers/internal/utils"
-	"buyers/internal/validator"
+	"fmt"
+	"os"
+	"sync"
+	"time"
 )
 
 func main() {
+	inicio := time.Now()
 	caminhoArquivo := "base_teste.txt"
 
-	linhas, err := reader.LerArquivoCSV(caminhoArquivo)
+	compradores, err := reader.LerArquivoCSV(caminhoArquivo)
 	if err != nil {
 		fmt.Println("Erro ao ler o arquivo:", err)
 		os.Exit(1)
@@ -26,33 +26,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Processar linhas
-	compradores := make([]buyer.Buyer, 0)
-	for _, linha := range linhas {
-		// Ignorar header
-		if string(linha[0]) == "CPF" {
-			continue
-		}
+	canalCompradores := make(chan bool, 100)
+	var wg sync.WaitGroup
+	compradoresCache := []buyer.Buyer{}
 
-		comprador := buyer.Buyer{
-			CPF: utils.RemoverCaracteresEspeciais(utils.ToLower(utils.RemoverAcentos(string(linha[0])))),
-			// ...
+	for _, comprador := range compradores {
+		compradoresCache = append(compradoresCache, comprador)
+		if len(compradoresCache) == 1000 {
+			compradoresBatch := append([]buyer.Buyer{}, compradoresCache...)
+			wg.Add(1)
+			canalCompradores <- true
+			go database.PersistirCompradores(db, compradoresBatch, canalCompradores, &wg)
+			compradoresCache = []buyer.Buyer{}
 		}
-
-		if !validator.ValidarCPF(comprador.CPF) {
-			comprador.CPF = "CPF inválido"
-		}
-		// ...
-
-		compradores = append(compradores, comprador)
 	}
 
-	// Persistir os dados no banco de dados
-	err = database.PersistirCompradores(db, compradores)
-	if err != nil {
-		fmt.Println("Erro ao persistir os dados:", err)
-		os.Exit(1)
-	}
+	wg.Add(1)
+	canalCompradores <- true
+	go database.PersistirCompradores(db, compradoresCache, canalCompradores, &wg)
+	wg.Wait()
 
 	fmt.Println("Dados persistidos com sucesso!")
+
+	fim := time.Now()
+
+	tempoTotal := fim.Sub(inicio)
+
+	fmt.Println("Tempo total:", tempoTotal)
 }

@@ -3,7 +3,10 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"strings"
+	"sync"
 
+	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 
 	"buyers/domain/buyer"
@@ -11,7 +14,7 @@ import (
 
 func ConectarDB() (*sql.DB, error) {
 	conexao := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		"localhost", "5432", "postgres", "postgres", "buyers")
+		"localhost", "54321", "postgres", "postgres", "buyers")
 
 	db, err := sql.Open("postgres", conexao)
 	if err != nil {
@@ -20,24 +23,28 @@ func ConectarDB() (*sql.DB, error) {
 
 	return db, nil
 }
+func PersistirCompradores(db *sql.DB, compradores []buyer.Buyer, canalCompradores chan bool, wg *sync.WaitGroup) error {
+	defer func() {
+		<-canalCompradores
+		wg.Done()
+	}()
 
-func PersistirCompradores(db *sql.DB, compradores []buyer.Buyer) error {
-
-	query := `INSERT INTO compradores (cpf, nome, status, data_ultima_compra, ticket_medio, ticket_ultima_compra, loja_mais_frequente, loja_ultima_compra) 
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
-
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		return errors.Wrap(err, "Erro ao preparar a query")
-	}
-	defer stmt.Close()
-
+	values := []string{}
 	for _, comprador := range compradores {
-		_, err := stmt.Exec(comprador.CPF, comprador.Nome, comprador.Status, comprador.DataUltimaCompra, comprador.TicketMedio, comprador.TicketUltimaCompra, comprador.LojaMaisFrequente, comprador.LojaUltimaCompra)
-		if err != nil {
-			return errors.Wrap(err, "Erro ao executar a query")
+		if comprador.DataUltimaCompra == "" {
+			values = append(values, fmt.Sprintf("('%s', %t, %t, %t, null, %f, %f, '%s', %t, '%s', %t)",
+				comprador.CPF, comprador.CPFValido, comprador.Private, comprador.Incompleto, comprador.TicketMedio, comprador.TicketUltimaCompra, comprador.LojaMaisFrequente, comprador.LojaMaisFrequenteValido, comprador.LojaUltimaCompra, comprador.LojaMaisFrequenteValido))
+		} else {
+			values = append(values, fmt.Sprintf("('%s', %t, %t, %t, '%s', %f, %f, '%s', %t, '%s', %t)",
+				comprador.CPF, comprador.CPFValido, comprador.Private, comprador.Incompleto, comprador.DataUltimaCompra, comprador.TicketMedio, comprador.TicketUltimaCompra, comprador.LojaMaisFrequente, comprador.LojaMaisFrequenteValido, comprador.LojaUltimaCompra, comprador.LojaMaisFrequenteValido))
 		}
 	}
 
+	query := fmt.Sprintf(`INSERT INTO compradores (cpf, cpf_valid, private, incompleto, data_ultima_compra, ticket_medio, ticket_ultima_compra, loja_mais_frequente, loja_mais_frequente_valid, loja_ultima_compra, loja_ultima_compra_valid) VALUES %s`, strings.Join(values, ","))
+
+	_, err := db.Exec(query)
+	if err != nil {
+		return errors.Wrap(err, "Erro ao iniciar a transação")
+	}
 	return nil
 }
