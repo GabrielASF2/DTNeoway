@@ -16,7 +16,8 @@ docker-compose up
 
 Use as configurações:
 ```
-localhost:54321/buyers
+localhost:54321
+database: buyers
 User: postgres
 Password: postgres
 ```
