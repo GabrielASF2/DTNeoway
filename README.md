@@ -15,9 +15,10 @@ docker-compose up
 ### Para conectar no Banco de Dados
 
 Use as configurações:
+
 ```
-localhost:54321
-database: buyers
+lURL: localhost:54321
+DB: buyers
 User: postgres
 Password: postgres
 ```
