@@ -17,10 +17,11 @@ docker-compose up
 Use as configurações:
 
 ```
-lURL: localhost:54321
+URL: localhost:54321
 DB: buyers
 User: postgres
 Password: postgres
+Table: compradores
 ```
 
 # Estratégia:
