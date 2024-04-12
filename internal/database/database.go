@@ -14,7 +14,7 @@ import (
 
 func ConectarDB() (*sql.DB, error) {
 	conexao := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		"localhost", "54321", "postgres", "postgres", "buyers")
+		"db", "5432", "postgres", "postgres", "buyers")
 
 	db, err := sql.Open("postgres", conexao)
 	if err != nil {
