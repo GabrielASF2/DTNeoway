@@ -1,8 +1,5 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 CREATE TABLE IF NOT EXISTS compradores (
-  id UUID DEFAULT uuid_generate_v4 () PRIMARY KEY,
-  cpf VARCHAR(14),
+  cpf VARCHAR(14) PRIMARY KEY,
   cpf_valid BOOLEAN NOT NULL,
   private BOOLEAN NOT NULL,
   incompleto BOOLEAN NOT NULL,

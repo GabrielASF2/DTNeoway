@@ -1,7 +1,7 @@
 version: '3.8'
 
 networks:
-  net-app-db:  # Nome da sua rede customizada
+  net-app-db:
 services:
   app:
     build: .
@@ -9,7 +9,7 @@ services:
       db:
         condition: service_healthy
     networks:
-      - net-app-db  # Conecte o serviço "app" à rede customizada    
+      - net-app-db  
   db:
     image: "postgres:latest"
     volumes:
